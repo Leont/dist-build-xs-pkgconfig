@@ -22,13 +22,19 @@ sub add_methods {
 			my @packages = ref($pkg_config) eq 'ARRAY' ? @{ $pkg_config } : $pkg_config;
 
 			for my $pkg_args (@packages) {
-				my $library = delete $pkg_args->{library};
+				my ($library, %pkg_args);
+				if (ref $pkg_args) {
+					$library  = delete $pkg_args->{library};
+					%pkg_args = %{$pkg_args};
+				} else {
+					$library = $pkg_args;
+				}
 
-				my $package = PkgConfig->find($library, %{$pkg_args});
+				my $package = PkgConfig->find($library, %pkg_args);
 
 				croak "No such library $library" unless $package && $package->pkg_exists;
 
-				if (my $min_version = $pkg_args->{min_version}) {
+				if (my $min_version = $pkg_args{min_version}) {
 					my $pkg_version = version->new($package->pkg_version);
 					croak "Library $library version $pkg_version smaller than $min_version" if $pkg_version < version->new($min_version);
 				}
@@ -69,7 +75,7 @@ Dist::Build::XS::PkgConfig - Dist::Build extension to use pkg-config.
 
 =head1 DESCRIPTION
 
-This module is an extension of L<Dist::Build::XS|Dist::Build::XS>, adding an additional argument to the C<add_xs> function: C<pkg_config>, allowing you to add flags to your build based on a pkg-config library file. This argument will either contain a hash, or a list of hashes. The hashes will contain the following entries:
+This module is an extension of L<Dist::Build::XS|Dist::Build::XS>, adding an additional argument to the C<add_xs> function: C<pkg_config>, allowing you to add flags to your build based on a pkg-config library file. This argument will either contain simply the name of a library, a hash or a list of names/hashes. The hashes will contain the following entries:
 
 =over 4
 
