@@ -39,8 +39,27 @@ sub add_methods {
 					croak "Library $library version $pkg_version smaller than $min_version" if $pkg_version < version->new($min_version);
 				}
 
-				unshift @{ $args{extra_compiler_flags} }, split_like_shell($package->get_cflags);
-				unshift @{ $args{extra_linker_flags}   }, split_like_shell($package->get_ldflags);
+				for my $compiler_flag (split_like_shell($package->get_cflags)) {
+					if ($compiler_flag =~ s/^-I//) {
+						unshift @{ $args{include_dirs} }, $compiler_flag;
+					} elsif ($compiler_flag =~ /^-D(\w+)=(.*)/) {
+						$args{defines}{$1} //= $2;
+					} elsif ($compiler_flag =~ /^-D(\w+)/) {
+						$args{defines}{$1} //= '';
+					} else {
+						unshift @{ $args{extra_compiler_flags} }, $compiler_flag;
+					}
+				}
+
+				for my $linker_flag (split_like_shell($package->get_ldflags)) {
+					if ($linker_flag =~ s/^-l//) {
+						unshift @{ $args{libraries} }, $linker_flag;
+					} elsif ($linker_flag =~ s/^-L//) {
+						unshift @{ $args{library_dirs} }, $linker_flag;
+					} else {
+						unshift @{ $args{extra_linker_flags} }, $linker_flag;
+					}
+				}
 			}
 		}
 
