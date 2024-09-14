@@ -3,7 +3,7 @@ package Dist::Build::XS::PkgConfig;
 use strict;
 use warnings;
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 use Carp 'croak';
 use ExtUtils::Helpers 'split_like_shell';
